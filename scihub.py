@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 import os
 import argparse
@@ -124,7 +126,8 @@ if __name__ == "__main__":
         '--scihuburl', '-u', help='current sci-hub url, default = https://sci-hub.tw/')
     parser.add_argument('--downloadpath', '-d',
                         help='output folder, will be created if not existed')
-    parser.add_argument('--proxy', '-p', help='proxy, default = empty')
+    parser.add_argument(
+        '--proxy', '-p', help='proxy, default = empty, use [PROTOCOL]://[IP]:[PORT], for example -p socks5://127.0.0.1:1080')
     parser.add_argument(
         '--xpath', '-x', help='[EXPERIMENTAL]pdf download link xpath selector')
     args = parser.parse_args()
