@@ -1,3 +1,7 @@
+sys
+os
+argparse
 requests
 lxml
+contextlib
 tqdm

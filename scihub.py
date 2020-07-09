@@ -1,5 +1,6 @@
 import sys
 import os
+import argparse
 import requests
 from lxml import etree
 from contextlib import closing
@@ -8,12 +9,30 @@ from tqdm import tqdm
 
 class Scihub:
     def __init__(self):
-        self.downloadInfoList = "doilist.txt"
+        self.downloadInfoList = ""
         self.scihubUrl = "https://sci-hub.tw/"
         self.xPath = '''//*[@id="pdf"]/@src'''
         self.downloadPath = "pdf"
-        self.proxy = ""
+        self.proxy = {}
+
         self.doilist = []
+        return
+
+    def setDownloadInfoList(self, downloadInfoList):
+        self.downloadInfoList = downloadInfoList
+
+    def setScihubUrl(self, scihubUrl):
+        self.scihubUrl = scihubUrl
+
+    def setXPath(self, xPath):
+        self.xPath = xPath
+
+    def setDownloadPath(self, downloadPath):
+        self.downloadPath = downloadPath
+
+    def setProxy(self, proxy):
+        self.proxy["http"] = proxy
+        self.proxy["https"] = proxy
 
     def interactiveShell(self):
         if not os.path.exists(self.downloadPath):
@@ -30,7 +49,6 @@ class Scihub:
                     print("Invalid input")
         return
 
-
     def getFileSize(self, downloadLinkResponse, index, listLength):
         headerDict = dict(downloadLinkResponse.headers)
         contentLength = headerDict.get('Content-Length')
@@ -42,7 +60,6 @@ class Scihub:
         #     )
         return int(contentLength)
 
-
     def getDoiList(self):
         with open(self.downloadInfoList, "r") as doi:
             self.doilist = doi.readlines()
@@ -50,10 +67,19 @@ class Scihub:
         return
 
     def downLoad(self, indX, doiX):
-        req = requests.get(url=self.scihubUrl+doiX)
-        root = etree.HTML(req.content)
-        elementDownloadLink = root.xpath(self.xPath)[0]
-        reqFile = requests.get(url=elementDownloadLink, stream=True)
+
+        if self.proxy:
+            req = requests.get(url=self.scihubUrl+doiX, proxies=self.proxy)
+            root = etree.HTML(req.content)
+            elementDownloadLink = root.xpath(self.xPath)[0]
+            reqFile = requests.get(
+                url=elementDownloadLink, stream=True, proxies=self.proxy)
+        else:
+            req = requests.get(url=self.scihubUrl+doiX)
+            root = etree.HTML(req.content)
+            elementDownloadLink = root.xpath(self.xPath)[0]
+            reqFile = requests.get(url=elementDownloadLink, stream=True)
+
         contentLength = self.getFileSize(reqFile, indX, len(self.doilist))
         fileName = doiX.replace("/", ".")+".pdf"
         with closing(reqFile) as response:
@@ -63,10 +89,11 @@ class Scihub:
                 for data in tqdm(
                     response.iter_content(chunk_size=chunk_size),
                     total=int(contentLength/chunk_size), unit="KiB",
-                    leave=False
+                    leave=False,
+                    desc="Current Progress"
                 ):
                     file.write(data)
-
+        return
 
     def scihubQuery(self):
         self.interactiveShell()
@@ -76,7 +103,7 @@ class Scihub:
             desc="Overall Progress",
             total=len(self.doilist),
             unit="paper"
-            ):
+        ):
             try:
                 self.downLoad(indX, doiX)
             except:
@@ -84,8 +111,31 @@ class Scihub:
                 with open("errlog.txt", "a") as errLog:
                     errLog.write(doiX+"\n")
                 sys.exit(1)
+        return
 
 
 if __name__ == "__main__":
-    a = Scihub()
-    a.scihubQuery()
+    parser = argparse.ArgumentParser(
+        description='scihub.py is a script written in Python for batch query of research paper in sci-hub accroding to your DOI/PMID list'
+    )
+    parser.add_argument(
+        '--file', '-f', help='[REQUIRED]Your input file, one row for a DOI/PMID', required=True)
+    parser.add_argument(
+        '--scihuburl', '-u', help='current sci-hub url, default = https://sci-hub.tw/')
+    parser.add_argument('--downloadpath', '-d',
+                        help='output folder, will be created if not existed')
+    parser.add_argument('--proxy', '-p', help='proxy, default = empty')
+    parser.add_argument(
+        '--xpath', '-x', help='[EXPERIMENTAL]pdf download link xpath selector')
+    args = parser.parse_args()
+    scihub = Scihub()
+    scihub.setDownloadInfoList(args.file)
+    if args.scihuburl:
+        scihub.setScihubUrl(args.scihuburl)
+    if args.downloadpath:
+        scihub.setDownloadPath(args.downloadpath)
+    if args.proxy:
+        scihub.setProxy(args.proxy)
+    if args.xpath:
+        scihub.setXPath(args.xpath)
+    scihub.scihubQuery()
