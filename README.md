@@ -1,6 +1,8 @@
 # sci-hub.py
 基于Python的文献批量下载工具，使用sci-hub
 
+![img](https://github.com/Stella3055/sci-hub.py/raw/master/assets/Peek%202020-07-09%2015-13.gif)
+
 ## Background
 由于之前使用并fork的sci-hub批量下载脚本疑似已失去维护，使用当前(2020.07)可用的sci-hub地址重新实现这一功能
 
@@ -59,8 +61,8 @@
 3. 启动下载，必需参数为```--file/-f```指定读入的DOI/PMID列表文件
     ```shell
     $ ./scihub.py -f sampleDoi.txt
-    Overall Progress:  10%|████▊          | 1/10 [00:05<00:51,  5.77s/paper]
-    Current Progress:  14%|██████▌     | 224/1550 [00:01<00:10, 127.05KiB/s
+    Overall Progress:  10%|████          | 1/10 [00:05<00:51,  5.77s/paper]
+    Current Progress:  14%|██████     | 224/1550 [00:01<00:10, 127.05KiB/s]
     ```
 4. 指定代理以加速下载，使用参数```--proxy/-p```， 该参数将重设```request```库的```http```和```https```代理，请自备梯子使用，代理格式为```[PROTOCOL]://[IP]:[PORT]```
     ```shell
